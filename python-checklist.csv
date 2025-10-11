@@ -1,0 +1,7 @@
+Step,Command,Purpose / Verification
+1. Navigate to Project Directory,"cd ~/dev-projects/python-api-project","Go to the correct folder for the project."
+2. Activate Virtual Environment,"source .venv/bin/activate","See (.venv) at the start of the terminal prompt."
+3. Check Database Status,"sudo systemctl status postgresql","Look for green 'active (running)' text."
+4,"(If needed) Start Database","sudo systemctl start postgresql","Use this if the status is not 'active (running)'."
+5. Start the API Server,"uvicorn main:app --reload","API is now running on http://127.0.0.1:8000."
+

@@ -1,0 +1,21 @@
+```
+
+### What's New?
+
+* **A `ContactForm` Model:** This new class defines the three fields we expect: `name`, `email`, and `message`.
+* **Email Validation (`EmailStr`):** Notice we used a special type, `EmailStr`, for the email field. FastAPI will now automatically reject any request where the email is not in a valid format (e.g., `test@example.com`). This is incredibly powerful!
+* **A `/contact` Endpoint:** A new endpoint specifically for handling our contact form data.
+
+### Test Your New Contact Form API
+
+Your server has already reloaded!
+
+1.  Refresh your documentation page at **`http://127.0.0.1:8000/docs`**.
+2.  You will now see a **third** endpoint: `POST /contact`.
+3.  Click on it, click "Try it out," and in the request body, enter a full contact form object:
+    ```json
+    {
+      "name": "Clayton",
+      "email": "clayton.is.a.legend@example.com",
+      "message": "FastAPI is amazing!"
+    }
