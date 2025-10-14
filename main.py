@@ -1,34 +1,47 @@
 import os
 import psycopg2
 from fastapi import FastAPI, HTTPException
-# We also import BaseModel from Pydantic to define our data structure
 from pydantic import BaseModel, EmailStr
 from dotenv import load_dotenv
+from psycopg2.extras import RealDictCursor
 
-# --- Configuration ---
-# Load the environment variables from our .env file
+# --- Configuration & Initialization ---
+# Load environment variables from a .env file for secure configuration.
 load_dotenv()
 
-# --- FastAPI App Initialization ---
+# Initialize the FastAPI application.
 app = FastAPI()
 
-# --- Pydantic Models (Our Data Structures) ---
+
+# --- Pydantic Data Models ---
 class ContactForm(BaseModel):
+    """Defines the data structure and validation for a contact form submission."""
     name: str
     email: EmailStr
     message: str
 
+
 # --- API Endpoints ---
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    """A simple root endpoint to confirm the API is running."""
+    return {"status": "API is running"}
 
-@app.post("/contact")
-def submit_contact_form(form_data: ContactForm):
-    conn = None  # Initialize connection to None
+
+@app.get("/submissions")
+def get_submissions():
+    """
+    Retrieves all submission records from the PostgreSQL database.
+
+    Returns:
+        A list of dictionaries, where each dictionary represents a submission.
+        Returns a 404 error if no submissions are found.
+    
+    Raises:
+        HTTPException: 500 status code for database connection or operational errors.
+    """
+    conn = None
     try:
-        # --- 1. Establish Database Connection ---
-        # Read the credentials from the environment variables
         conn = psycopg2.connect(
             dbname=os.getenv("DB_NAME"),
             user=os.getenv("DB_USER"),
@@ -36,43 +49,71 @@ def submit_contact_form(form_data: ContactForm):
             host=os.getenv("DB_HOST"),
             port=os.getenv("DB_PORT")
         )
-        # Create a "cursor" to execute SQL commands
+        # Use RealDictCursor to get results as a list of dictionaries.
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute("SELECT id, name, email, message, submitted_at FROM submissions;")
+        submissions = cur.fetchall()
+        
+        cur.close()
+
+        if not submissions:
+            raise HTTPException(status_code=404, detail="No submissions found.")
+
+        return submissions
+
+    except psycopg2.Error as e:
+        print(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error - Database operation failed.")
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+@app.post("/contact")
+def submit_contact_form(form_data: ContactForm):
+    """
+    Accepts a contact form submission and saves it to the PostgreSQL database.
+
+    Args:
+        form_data: A Pydantic model containing the validated name, email, and message.
+
+    Returns:
+        A success message upon successful insertion into the database.
+    
+    Raises:
+        HTTPException: 500 status code for database connection or operational errors.
+    """
+    conn = None
+    try:
+        conn = psycopg2.connect(
+            dbname=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            host=os.getenv("DB_HOST"),
+            port=os.getenv("DB_PORT")
+        )
         cur = conn.cursor()
 
-        # --- 2. Write the SQL INSERT Command ---
-        # This SQL statement will insert a new row into our 'submissions' table.
-        # We use %s placeholders to prevent SQL injection attacks. This is a crucial security practice!
+        # Use parameterized queries (%s) to prevent SQL injection vulnerabilities.
         sql_command = """
             INSERT INTO submissions (name, email, message) 
             VALUES (%s, %s, %s);
         """
         
-        # --- 3. Execute the Command ---
-        # Pass the SQL command and a tuple of the data to the cursor.
         cur.execute(sql_command, (form_data.name, form_data.email, form_data.message))
         
-        # --- 4. Commit the Transaction ---
-        # This saves the changes to the database.
         conn.commit()
-        
-        # --- 5. Close the cursor and connection ---
         cur.close()
         
-        # Return a success message
         return {
             "status": "success",
-            "message": "Contact form submitted and saved to database successfully!"
+            "message": "Contact form submitted successfully!"
         }
 
     except psycopg2.Error as e:
-        # If any database error occurs, print it for debugging
-        print("Database error:", e)
-        # Return a 500 Internal Server Error to the client
-        raise HTTPException(status_code=500, detail="Database connection error.")
-        
+        print(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error - Database operation failed.")
     finally:
-        # --- 6. The "Finally" block always runs ---
-        # This ensures our connection is closed, even if an error occurred.
         if conn is not None:
             conn.close()
-
