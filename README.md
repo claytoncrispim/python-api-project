@@ -2,6 +2,7 @@
 
 A secure and robust backend API designed to handle contact form submissions. This project features a Python-based FastAPI server that performs data validation using Pydantic models. All submissions are securely saved to a PostgreSQL database, demonstrating a complete, professional data pipeline.
 
+![FastAPI Interactive Docs](img/fastapi_docs.png)
 ## Features
 * **Data Validation**: Utilizes Pydantic for strict, type-safe validation of incoming data.
 
@@ -58,7 +59,7 @@ To get a local copy up and running, follow these simple steps.
 ## API Endpoints
 Once the server is running, you can access the interactive documentation provided by FastAPI at http://127.0.0.1:8000/docs.
 
-![FastAPI Interactive Docs](img/fastapi_docs.png)
+
 
 ### 1. Submit a Message
 * Method: ```POST```
