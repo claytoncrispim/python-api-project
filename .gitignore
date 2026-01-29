@@ -1,6 +1,12 @@
-# Ignore the virtual environment folder
+# Environments
 .venv/
-# Ignore Python cache files
+venv/
+ENV/
+
+# Python bytecode
 __pycache__/
-# Ignore our secret environment variables file
+*.py[cod]
+*$py.class
+
+# Environment variables
 .env
